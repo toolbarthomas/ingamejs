@@ -1,22 +1,31 @@
 {
-  "name": "ingamejs",
+  "name": "thundershock",
   "version": "0.1.0",
-  "description": "Video game concepts",
-  "main": "index.js",
+  "description": "A minimal videogame framework written in Typescript ",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsc --noEmit",
+    "dev": "node node/esbuild.main.mjs -s"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/toolbarthomas/ingamejs.git"
+    "url": "git+https://github.com/toolbarthomas/thundershock.git"
   },
+  "keywords": [
+    "game",
+    "html5",
+    "requestAnimationFrame",
+    "canvas",
+    "2d"
+  ],
   "author": "Thomas van der Velde <contact@toolbarthomas.net>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/toolbarthomas/ingamejs/issues"
+    "url": "https://github.com/toolbarthomas/thundershock/issues"
   },
-  "homepage": "https://github.com/toolbarthomas/ingamejs#readme",
+  "homepage": "https://github.com/toolbarthomas/thundershock#readme",
   "devDependencies": {
-    "domready": "^1.0.8"
+    "esbuild": "^0.19.2",
+    "typescript": "^5.2.2"
   }
 }
