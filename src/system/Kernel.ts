@@ -142,7 +142,7 @@ export class Kernel extends Console {
 
       // Call the initial handler for the first time or wait for the optional
       // awaitFor timeout if the handler duration exceeds the frame budget.
-      if (!duration || !awaitFor || tick + awaitFor <= props.tick) {
+      if (!duration || awaitFor <= 1 || tick + awaitFor <= props.tick) {
         if (queue[i].tick !== undefined) {
           queue[i].tick = props.tick;
         }
