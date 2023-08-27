@@ -306,12 +306,9 @@ export class Kernel extends Console {
 
               // Stringify the current handler and call it within a Web Worker
               // to prevent the main thread from slowing down.
-
-              const ii = Kernel.toString();
-              console.log("Custom", ii);
               const fn = queue[i].fn.toString();
               const json = JSON.stringify(props);
-              const template = `(${fn})(${json}, ${tick}, ${clean}, globalThis)`;
+              const template = `(${fn})(${json}, ${tick}, ${clean})`;
 
               const blob = URL.createObjectURL(
                 new Blob([template], {
@@ -350,6 +347,7 @@ export class Kernel extends Console {
                 blob && URL.revokeObjectURL(blob);
               });
             } else {
+              // Default behaviour
               queue[i].fn(props, queue[i].tick || props.tick, clean, this);
             }
           } catch (exception) {
@@ -358,9 +356,6 @@ export class Kernel extends Console {
             }
           }
         }
-
-        // typeof queue[i].fn === "function" &&
-        //   queue[i].fn(props, this.index[name], clean);
       }
 
       const { once } = queue[i].options || {};
