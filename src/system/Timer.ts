@@ -43,7 +43,7 @@ export class Timer extends Core {
 
       //@todo Dirty fix to ensure the default framerate is more stable;
       if (this.fps >= Timer.defaults.fps) {
-        this.fps = Math.round(this.fps * 1.1);
+        this.fps = Math.round(this.fps * 1.175);
 
         Core.warning(
           `Main FPS adjusted to ensure a more stable experience: ${this.fps}`
@@ -94,5 +94,7 @@ export class Timer extends Core {
    */
   start(name?: string) {
     this.subscribe(name || Kernel.id);
+
+    Core.info(`Timer started: ${name || Kernel.id}@${Kernel.now()}`);
   }
 }

@@ -6,7 +6,10 @@ import { ApplicationConfiguration } from "thundershock";
 export const config: ApplicationConfiguration = {
   display: {
     fps: 60,
+    height: 600,
     id: "thundershock",
+    type: "2d",
+    width: 800,
   },
 };
 

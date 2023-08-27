@@ -30,6 +30,8 @@ export class Core extends Console {
       ? (config as ApplicationConfiguration)
       : kernel.config;
 
-    Core.log(this.name, this.kernel, this);
+    Core.log(`${this.name} loaded`);
+
+    // Core.log(this.name, this.kernel, this);
   }
 }

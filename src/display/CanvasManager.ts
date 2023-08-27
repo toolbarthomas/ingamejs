@@ -1,9 +1,7 @@
-import { ApplicationConfiguration } from "thundershock";
+import { ApplicationConfiguration, CanvasManagerContext } from "thundershock";
 
 import { Kernel } from "@/system/Kernel";
 import { Core } from "@system/Core";
-
-export type CanvasManagerContext = HTMLCanvasElement;
 
 export class CanvasManager extends Core {
   context: CanvasManagerContext;
@@ -17,7 +15,8 @@ export class CanvasManager extends Core {
   /**
    * Assigns the existing Canvas to the created CanvasManager or create a new
    * Canvas element that will be assigned to the Application context.
-   * @param id
+   *
+   * @param id Use the optional ID value for the element target.
    */
   defineCanvas(id?: string) {
     const initialCanvas: null | HTMLCanvasElement =
@@ -41,5 +40,21 @@ export class CanvasManager extends Core {
     context.insertAdjacentElement("afterbegin", newCanvas);
 
     return newCanvas;
+  }
+
+  resizeContext(width: number, height: number) {
+    if (this.context) {
+      this.context.width = width;
+      this.context.height = height;
+    }
+  }
+
+  /**
+   * Returns the defined CanvasContext or define a new Canvas.
+   *
+   * @param id Optional id property to use.
+   */
+  useContext(id?: string) {
+    return this.context || this.defineCanvas(id);
   }
 }

@@ -26,6 +26,9 @@
       "@system/*": [
         "./src/system/*"
       ],
+      "@video/*": [
+        "./src/video/*"
+      ],
       "thundershock": [
         "./_types/main.d.ts"
       ],

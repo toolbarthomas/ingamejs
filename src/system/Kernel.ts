@@ -1,12 +1,12 @@
 import {
   ApplicationConfiguration,
   ApplicationHandler,
+  FrameProps,
   TimerSubscribtionName,
 } from "thundershock";
 
 import { Console } from "@system/Console";
 import { Core } from "@system/Core";
-import { AnimationThreadProps } from "@toolbarthomas/animation-thread/src/_types/main";
 
 export const NAME = "thundershock";
 
@@ -164,6 +164,11 @@ export class Kernel extends Console {
       delete handler.worker;
 
       if (exception) {
+        Kernel.error(
+          "eee",
+          handler.duration,
+          (1000 / this.config.display.fps) * 2
+        );
         Kernel.error(exception);
 
         this.detach(handler, true);
@@ -219,7 +224,7 @@ export class Kernel extends Console {
    * @param request The current frame properties to use within the called
    * handlers.
    */
-  tick(name: string, props: AnimationThreadProps) {
+  tick(name: string, props: FrameProps) {
     if (!this.active) {
       Console.error(`Unable to continue tick with inactive Kernel...`);
       return;
@@ -283,7 +288,12 @@ export class Kernel extends Console {
 
         if (typeof queue[i].fn === "function") {
           try {
-            if (duration && duration >= 1000 / props.targetFPS) {
+            // Convert the given handler if it at least skips 1 frame.
+            const min = (1000 / props.targetFPS) * 2;
+
+            if (queue[i].options && queue[i].options.main) {
+              queue[i].fn(props, queue[i].tick || props.tick, clean, this);
+            } else if (duration && duration >= min) {
               if (queue[i].worker instanceof Worker) {
                 this.kill(queue[i]);
               } else {
@@ -323,29 +333,29 @@ export class Kernel extends Console {
               //
               // You should consider to optimize the converted handler or ensure
               // the logic can run in asynchronous order.
-              queue[i].idle !== undefined &&
-                cancelIdleCallback(queue[i].idle as any);
-              queue[i].idle = requestIdleCallback(() => {
-                queue[i].worker = new Worker(blob);
+              // queue[i].idle !== undefined &&
+              //   cancelIdleCallback(queue[i].idle as any);
+              // queue[i].idle = requestIdleCallback(() => {
+              queue[i].worker = new Worker(blob);
 
-                queue[i].worker?.addEventListener(
-                  "error",
-                  (error) => this.kill(queue[i], error),
-                  {
-                    once: true,
-                  }
-                );
+              queue[i].worker?.addEventListener(
+                "error",
+                (error) => this.kill(queue[i], error),
+                {
+                  once: true,
+                }
+              );
 
-                queue[i].worker?.addEventListener(
-                  "messageerror",
-                  (error) => this.kill(queue[i], error),
-                  {
-                    once: true,
-                  }
-                );
+              queue[i].worker?.addEventListener(
+                "messageerror",
+                (error) => this.kill(queue[i], error),
+                {
+                  once: true,
+                }
+              );
 
-                blob && URL.revokeObjectURL(blob);
-              });
+              blob && URL.revokeObjectURL(blob);
+              // });
             } else {
               // Default behaviour
               queue[i].fn(props, queue[i].tick || props.tick, clean, this);

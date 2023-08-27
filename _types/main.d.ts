@@ -8,10 +8,28 @@ import { Kernel } from "@/system/Kernel";
  */
 export type ApplicationConfiguration = {
   display: {
+    // Run the main loop within the defined FPS value.
     fps: number;
+
+    // The initial height for the display.
+    height: number;
+
+    // The id property value to use within the Render target.
     id: string;
+
+    // Renders the application within the selected context, more options could
+    // be supported in the future.
+    type: "2d";
+
+    // The initial width for the display.
+    width: number;
   };
 };
+
+/**
+ * The Canvas element to use for the application.
+ */
+export type CanvasManagerContext = HTMLCanvasElement;
 
 /**
  * Defines the expected function that is called within the Kernel.tick() method.
@@ -31,6 +49,9 @@ export type ApplicationHandler = {
     // Use the defined function handler only once and remove it at the end of
     // the initial frame.
     once?: boolean;
+
+    // Prevent the usage of Web Worker for the defined Handler.
+    main?: boolean;
 
     // Call the actual handler after the given delay in ms.
     delay?: number;
@@ -53,18 +74,34 @@ export type ApplicationHandler = {
 };
 
 /**
+ * Reference to the actual frame related properties defined
+ * @toolbarthomas/animation-thread.
+ */
+export type FrameProps = AnimationThreadProps;
+
+/**
  * Defines the optional configuration that can be assigned to the actual
  * ApplicationConfiguration type.
  */
 export type InstanceConfiguration = {
   display?: {
     fps?: ApplicationConfiguration["display"]["fps"];
+    height?: ApplicationConfiguration["display"]["height"];
     id?: ApplicationConfiguration["display"]["id"];
+    type?: ApplicationConfiguration["display"]["type"];
+    width?: ApplicationConfiguration["display"]["width"];
   };
 };
 
+/**
+ * Defines the default options to use when extending from the Core class.
+ */
 export interface DefaultOptions {
   config?: ApplicationConfiguration;
+}
+
+export interface RenderEngineOptions extends DefaultOptions {
+  target: CanvasManagerContext;
 }
 
 /**
@@ -81,7 +118,7 @@ export interface TimerOptions extends DefaultOptions {
  */
 export type TimerSubscriptionHandler = (
   // Context properties defined from the requestAnimationFrame usage.
-  props: AnimationThreadProps,
+  props: FrameProps,
   // Tick value that should match with the current frame tick, the handler will
   // be throttled if the offset is too high.
   tick: number,
