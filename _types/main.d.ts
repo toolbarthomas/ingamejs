@@ -1,6 +1,8 @@
 import { AnimationThreadProps } from "@toolbarthomas/animation-thread/src/_types/main";
 import { AnimationThread } from "@toolbarthomas/animation-thread";
 import { Kernel } from "@/system/Kernel";
+import { Camera } from "@/display/Camera";
+import { Scene } from "@/game/Scene";
 
 /**
  * Defines the expected configuration Object to use within the running
@@ -25,11 +27,6 @@ export type ApplicationConfiguration = {
     width: number;
   };
 };
-
-/**
- * The Canvas element to use for the application.
- */
-export type CanvasManagerContext = HTMLCanvasElement;
 
 /**
  * Defines the expected function that is called within the Kernel.tick() method.
@@ -74,6 +71,29 @@ export type ApplicationHandler = {
 };
 
 /**
+ * Properites to use when constructing a new Camera instance.
+ */
+export type CameraProps = {
+  height?: number;
+  name?: string;
+  width?: number;
+  x?: number;
+  y?: number;
+};
+
+/**
+ * The Canvas element to use for the application.
+ */
+export type CanvasManagerContext = HTMLCanvasElement;
+
+/**
+ * Defines the default options to use when extending from the Core class.
+ */
+export interface DefaultOptions {
+  config?: ApplicationConfiguration;
+}
+
+/**
  * Reference to the actual frame related properties defined
  * @toolbarthomas/animation-thread.
  */
@@ -93,16 +113,18 @@ export type InstanceConfiguration = {
   };
 };
 
-/**
- * Defines the default options to use when extending from the Core class.
- */
-export interface DefaultOptions {
-  config?: ApplicationConfiguration;
-}
+export type PublisherInstance = Camera;
+export type PublisherInstances = { [key: string]: PublisherInstance };
 
 export interface RenderEngineOptions extends DefaultOptions {
   target: CanvasManagerContext;
 }
+
+export type SceneProps = {
+  id: Scene["id"];
+  active?: Scene["actuve"];
+  cameras: Scene["cameras"];
+};
 
 /**
  * Defines the custom options for the constructed Timer instance.

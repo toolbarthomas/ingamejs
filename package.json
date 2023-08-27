@@ -27,5 +27,8 @@
   "devDependencies": {
     "esbuild": "^0.19.2",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
   }
 }

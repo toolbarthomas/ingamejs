@@ -23,6 +23,9 @@
       "@display/*": [
         "./src/display/*"
       ],
+      "@game/*": [
+        "./src/game/*"
+      ],
       "@system/*": [
         "./src/system/*"
       ],
