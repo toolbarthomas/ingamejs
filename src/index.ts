@@ -17,27 +17,39 @@ window.addEventListener(
     const timer = new Timer(kernel, { autostart: true });
     const canvasManager = new CanvasManager(kernel);
 
-    kernel.attach(Kernel.id, (props, tick, clean) => {
+    const f = kernel.attach(Kernel.id, (props, tick, clean, root) => {
       let i = 0;
 
       const date = new Date().getTime();
 
-      while (i < 10e7) {
+      //@CONTINUE expose kernel from window Object?
+      console.log("Custom start", root);
+
+      while (i < 10e8) {
         i++;
       }
 
-      setTimeout(() => {
-        console.log("Cannot see me", props.tick, tick);
-      }, 2000);
+      console.log(i);
 
-      console.log("My custom function", props.tick, tick, props.fps);
+      console.log("Custom end", props.fps, clean, root);
 
       // throw Error("Foo bar");
     });
 
-    kernel.attach(Kernel.id, (props, tick, clean) => {
-      console.log("Other function", props.tick, tick, props.fps);
-    });
+    kernel.attach(
+      Kernel.id,
+      (props, tick, clean, root) => {
+        console.log("Other function", clean, props.fps);
+
+        let i = 0;
+        while (i < 10e5) {
+          i++;
+        }
+
+        console.log("delay", i);
+      },
+      { delay: 1000 }
+    );
 
     // Startup the created Kernel with the bootstrapped dependencies.
     kernel.start();

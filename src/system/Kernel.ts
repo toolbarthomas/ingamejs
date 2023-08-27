@@ -19,6 +19,11 @@ export class Kernel extends Console {
   // Alias to the initial Kernel namespace value.
   static id = NAME;
 
+  // Alias to the now timestamp methods.
+  static now() {
+    return performance.now() || Date.now();
+  }
+
   constructor(config: ApplicationConfiguration) {
     super();
 
@@ -28,29 +33,150 @@ export class Kernel extends Console {
   }
 
   /**
-   * Attaches the defined handler to the named Kernel queue.
+   * Attaches the defined handler to the named Kernel queue. The actual handler
+   * should run for each tick within the defined requestAnimationFrame context.
+   * The attached function will be called from the Kernel.tick method if the
+   * name value matches within mentioned handler parameter:
+   *
+   * Kernel.tick('foo') // Will only call function that are assigned as Kernel.attach('foo', ...)
+   *
+   * You can delay the first usage of the attached handler by using the delay
+   * property option. The Kernel will try to run the defined timeout within the
+   * closest frame. This should minimize the offset between the assignment of
+   * the handler since it stalls the actual handler to the expected tick instead
+   * of using an actual setTimeout.
+   *
+   * An attached handler that exceeds the frame budget will be throttled by
+   * moving it as an Web Worker to reduce the load on the main thread.
+   * This can be usefull if large calculations are required within a single
+   * function but keep in mind that any application related context is lost
+   * within the Web Worker. You should avoid this method and try to optimize
+   * your logic.
+   *
    * @param name Attach the handler to the defined queue thread.
    * @param handler The actual handler to attach.
    * @param options The optional options to use within the handler.
-   * @returns
    */
   attach(
     name: ApplicationHandler["name"],
-    handler: ApplicationHandler["fn"],
+    fn: ApplicationHandler["fn"],
     options?: ApplicationHandler["options"]
   ) {
     const n = name || Kernel.id;
 
-    if (!handler || typeof handler !== "function") {
+    if (!fn || typeof fn !== "function") {
       Kernel.error(`Unable to attach undefined handler: @${n}`);
 
       return;
     }
 
-    this.queue.push({ name, fn: handler, options });
+    const handler = {
+      name,
+      fn,
+      options: options || {},
+      timestamp: Kernel.now(),
+    };
 
-    Kernel.info(`Handler attached: @${n}`);
+    this.queue.push(handler);
+
+    Kernel.info(`Handler attached: ${n}@${handler.timestamp}`);
+
+    return handler;
   }
+
+  /**
+   * Detach the existing handler from the Kernel queue by it's timestamp or the
+   * handler function and estimated duration.
+   *
+   * @param context Removes the handler from it's timestamp or all handlers
+   * with identical functions.
+   * @param error Should be true if the detach was because of an exception.
+   */
+  detach(context: number | ApplicationHandler, error?: boolean) {
+    let status = false;
+
+    if (!this.queue || !this.queue.length) {
+      Kernel.log(`Unable to detach without any queue...`);
+
+      return status;
+    }
+
+    if (typeof context !== "number") {
+      if (context.duration === undefined || typeof context.fn !== "function") {
+        Kernel.error(`Unable to detach invalid handler: ${context.name}`);
+
+        return status;
+      }
+    }
+
+    for (let i = 0; i < this.queue.length; i++) {
+      let remove = false;
+      if (typeof context === "number" && context === this.queue[i].timestamp) {
+        remove = true;
+      } else if (
+        typeof context !== "number" &&
+        this.queue[i].duration === context.duration &&
+        this.queue[i].fn === context.fn &&
+        !(context.options || {}).once
+      ) {
+        remove = true;
+      }
+
+      if (remove) {
+        if (error) {
+          Kernel.warning(
+            `The attached handler ${
+              this.queue[i].timestamp
+            } has been removed at: ${Kernel.now()}`
+          );
+        }
+
+        delete this.queue[i];
+
+        status = true;
+
+        break;
+      }
+    }
+
+    if (status) {
+      Console.info(
+        `Handler detached: ${
+          typeof context === "number" ? context : context.timestamp
+        }`
+      );
+    }
+
+    return status;
+  }
+
+  /**
+   * Kills the running Web Worker from the given ApplicationHandler and detach
+   * it afterwards.
+   *
+   * @param handler Terminate the Worker from the given handler.
+   * @param exception Should be TRUE if the kill method was used because of an
+   */
+  kill(handler: ApplicationHandler | null, exception?: any) {
+    if (handler && handler.worker) {
+      handler.worker.terminate();
+
+      delete handler.worker;
+
+      if (exception) {
+        Kernel.error(exception);
+
+        this.detach(handler, true);
+        handler = null;
+      }
+    } else if (handler) {
+      Kernel.warning(
+        `Unable to kill undefined Worker: ${handler.name}@${handler.timestamp}`
+      );
+    }
+  }
+
+  setTimeout(fn: ApplicationHandler["fn"]) {}
 
   /**
    * Starts the created Kernel instance and mark it as active.
@@ -132,18 +258,24 @@ export class Kernel extends Console {
       if (!queue[i].duration) {
         Kernel.info(`Benchmark '${name}' handler...`, queue[i].fn);
 
-        now = performance.now();
+        now = Kernel.now();
       }
 
+      const delay = queue[i].options.delay;
       const duration = queue[i].duration || 0;
-      const tick = queue[i].tick || props.tick;
+      const tick = queue[i].tick || 0;
       const multiplier = Math.round(duration / props.targetFPS);
-      const awaitFor = Math.ceil(duration / (1000 / props.targetFPS));
+      const awaitFor = Math.floor(duration / (1000 / props.targetFPS));
+      const delayDelta = Kernel.now() - queue[i].timestamp;
 
       // Call the initial handler for the first time or wait for the optional
       // awaitFor timeout if the handler duration exceeds the frame budget.
-      if (!duration || awaitFor <= 1 || tick + awaitFor <= props.tick) {
-        if (queue[i].tick !== undefined) {
+      if (!duration || !awaitFor || tick + awaitFor <= props.tick) {
+        if (delay && delay - delayDelta > 0) {
+          continue;
+        }
+
+        if (tick !== undefined) {
           queue[i].tick = props.tick;
         }
 
@@ -152,31 +284,34 @@ export class Kernel extends Console {
         if (typeof queue[i].fn === "function") {
           try {
             if (duration && duration >= 1000 / props.targetFPS) {
-              const kill = (exception?: any) => {
-                exception && Kernel.error(exception);
-
-                if (queue[i].worker) {
-                  queue[i].worker?.removeEventListener("error", kill);
-                  queue[i].worker?.removeEventListener("messageerror", kill);
-
-                  queue[i].worker?.terminate();
-
-                  delete queue[i].worker;
-                }
-              };
-
               if (queue[i].worker instanceof Worker) {
-                kill();
+                this.kill(queue[i]);
               } else {
-                setTimeout(kill, duration - 1000 / props.targetFPS);
+                queue[i].timeout && clearTimeout(queue[i].timeout);
+                // Timeout the constructed Web Worker and terminate afterwards.
+                queue[i].timeout = setTimeout(
+                  () => {
+                    console.log("timeout in", queue[i].fn, [...this.queue]);
+                    this.kill(queue[i]);
+                    console.log(
+                      "timeout out",
+                      duration,
+                      duration - 1000 / props.targetFPS
+                    );
+                  },
+                  duration - 1000 / props.targetFPS,
+                  this.queue
+                );
               }
 
               // Stringify the current handler and call it within a Web Worker
               // to prevent the main thread from slowing down.
-              const template = `
-              (${queue[i].fn.toString()}
-              )(${JSON.stringify(props)}, ${queue[i].tick}, ${clean})
-              `;
+
+              const ii = Kernel.toString();
+              console.log("Custom", ii);
+              const fn = queue[i].fn.toString();
+              const json = JSON.stringify(props);
+              const template = `(${fn})(${json}, ${tick}, ${clean}, globalThis)`;
 
               const blob = URL.createObjectURL(
                 new Blob([template], {
@@ -196,13 +331,26 @@ export class Kernel extends Console {
               queue[i].idle = requestIdleCallback(() => {
                 queue[i].worker = new Worker(blob);
 
-                queue[i].worker?.addEventListener("error", kill);
-                queue[i].worker?.addEventListener("messageerror", kill);
+                queue[i].worker?.addEventListener(
+                  "error",
+                  (error) => this.kill(queue[i], error),
+                  {
+                    once: true,
+                  }
+                );
+
+                queue[i].worker?.addEventListener(
+                  "messageerror",
+                  (error) => this.kill(queue[i], error),
+                  {
+                    once: true,
+                  }
+                );
 
                 blob && URL.revokeObjectURL(blob);
               });
             } else {
-              queue[i].fn(props, queue[i].tick || props.tick, clean);
+              queue[i].fn(props, queue[i].tick || props.tick, clean, this);
             }
           } catch (exception) {
             if (exception) {
@@ -229,7 +377,7 @@ export class Kernel extends Console {
         });
       } else if (!queue[i].duration) {
         // Assign the benchmarked result once.
-        queue[i].duration = performance.now() - now;
+        queue[i].duration = Kernel.now() - now;
 
         if (duration >= 1000 / props.targetFPS) {
           const ticks = Math.ceil(duration / (1000 / props.targetFPS));

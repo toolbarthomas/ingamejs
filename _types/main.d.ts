@@ -1,5 +1,6 @@
 import { AnimationThreadProps } from "@toolbarthomas/animation-thread/src/_types/main";
 import { AnimationThread } from "@toolbarthomas/animation-thread";
+import { Kernel } from "@/system/Kernel";
 
 /**
  * Defines the expected configuration Object to use within the running
@@ -26,10 +27,13 @@ export type ApplicationHandler = {
   name: TimerSubscribtionName;
 
   // Additional options that is used during the attachment.
-  options?: {
+  options: {
     // Use the defined function handler only once and remove it at the end of
     // the initial frame.
     once?: boolean;
+
+    // Call the actual handler after the given delay in ms.
+    delay?: number;
   };
 
   // Optional Worker that will be created when the attached handler slows down
@@ -37,10 +41,15 @@ export type ApplicationHandler = {
   worker?: Worker;
 
   // The actual frame handler.
-  fn: (props: AnimationThreadProps, tick: number, clean: boolean) => void;
+  fn: TimerSubscriptionHandler;
 
   // Defines the tick value of the last frame the handler was used.
   tick?: number;
+
+  timeout?: number;
+
+  // The timestamp during the attachment of the handler.
+  timestamp: number;
 };
 
 /**
@@ -65,10 +74,23 @@ export interface TimerOptions extends DefaultOptions {
   autostart?: boolean;
 }
 
+/**
+ * Subscription handlers are assigned to the Kernel queue that should run each
+ * tick from the defined animation thread. This meanse that the attached name
+ * should match with the animation thread in order to be called for each tick.
+ */
 export type TimerSubscriptionHandler = (
+  // Context properties defined from the requestAnimationFrame usage.
   props: AnimationThreadProps,
+  // Tick value that should match with the current frame tick, the handler will
+  // be throttled if the offset is too high.
   tick: number,
-  clean: boolean
+
+  // Will be true if there is no large tick offset or frame delay.
+  clean: boolean,
+
+  // Optional reference to the constructed Kernel instance.
+  root?: Kernel
 ) => void;
 
 /**
