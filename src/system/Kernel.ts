@@ -5,6 +5,8 @@ import {
   TimerSubscribtionName,
 } from "thundershock";
 
+import events, { EventBus } from "@event/Eventbus";
+import { KERNEL_START } from "@event/eventTypes";
 import { Console } from "@system/Console";
 import { Core } from "@system/Core";
 
@@ -12,6 +14,7 @@ export const NAME = "thundershock";
 
 export class Kernel extends Console {
   active?: boolean;
+  events: EventBus = events;
   index: { [key: TimerSubscribtionName]: number } = {};
   config: ApplicationConfiguration;
   queue: ApplicationHandler[] = [];
@@ -195,6 +198,8 @@ export class Kernel extends Console {
     this.active = true;
 
     Kernel.info(`Kernel started: ${Date.now()}`);
+
+    this.events.emit(KERNEL_START, this);
 
     return this.active;
   }

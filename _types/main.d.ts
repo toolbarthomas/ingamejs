@@ -121,9 +121,10 @@ export interface RenderEngineOptions extends DefaultOptions {
 }
 
 export type SceneProps = {
-  id: Scene["id"];
   active?: Scene["actuve"];
   cameras: Scene["cameras"];
+  id: Scene["id"];
+  name: Scene["name"];
 };
 
 /**

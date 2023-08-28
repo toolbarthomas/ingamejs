@@ -1,6 +1,11 @@
 import EventEmitter from "eventemitter3";
 
-export class Events {
+/**
+ * The Eventbus is a wrapper around the Event Emitter module. A singleton
+ * instance is created within this entry file that is attached to the running
+ * Kernel.
+ */
+export class EventBus {
   emitter: EventEmitter;
 
   constructor() {
@@ -20,6 +25,11 @@ export class Events {
   }
 }
 
-const events = new Events();
+/**
+ * Defines a Global EventBus to use within the bundle that should be used to
+ * interchange the Kernel context with any game related context like:
+ * scene management, canvas rendering and many more.
+ */
+const events = new EventBus();
 
 export default events;

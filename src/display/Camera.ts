@@ -27,7 +27,7 @@ export class Camera extends Service {
   scene?: string;
 
   static defaults = {
-    name: "main",
+    name: "Camera",
     x: 0,
     y: 0,
     zoom: 1,
@@ -39,6 +39,8 @@ export class Camera extends Service {
     const { name } = props;
 
     this.name = name || Camera.defaults.name;
+
+    this.set(this.name);
 
     // Setup the initial Camera position & viewport.
     this.resize();
