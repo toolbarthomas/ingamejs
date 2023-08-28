@@ -8,7 +8,9 @@ export class CanvasManager extends Core {
 
   constructor(kernel: Kernel) {
     super(kernel);
+  }
 
+  private _define() {
     this.context = this.defineCanvas();
   }
 

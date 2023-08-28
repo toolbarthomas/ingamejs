@@ -16,24 +16,6 @@ let consoleMessageCount = 0;
  */
 export class Console {
   /**
-   * Console helper that will reset every x amount of method uses.
-   *
-   * @param type The Console method to call.
-   * @param args Any Console related parameter.
-   */
-  static use(type = "log", ...args: any) {
-    const c = globalThis.console as globalThis.Console;
-
-    //@ts-ignore
-    if (globalThis.console[type]) {
-      //@ts-ignore
-      globalThis.console[type](...args);
-
-      consoleMessageCount += 1;
-    }
-  }
-
-  /**
    * Console helper that use the console.error method, the output is not cleared
    * while using this method but should throw an Exception.
    *
@@ -57,6 +39,11 @@ export class Console {
     Console.use("log", ...args);
   }
 
+  // Alias to the now timestamp methods.
+  static now() {
+    return performance.now() || Date.now();
+  }
+
   /**
    * Default Console helper that could be used within a production environment.
    * This method should be used only for outputting common information that does
@@ -66,6 +53,24 @@ export class Console {
    */
   static info(...args: any) {
     Console.use("info", ...args);
+  }
+
+  /**
+   * Console helper that will reset every x amount of method uses.
+   *
+   * @param type The Console method to call.
+   * @param args Any Console related parameter.
+   */
+  static use(type = "log", ...args: any) {
+    const c = globalThis.console as globalThis.Console;
+
+    //@ts-ignore
+    if (globalThis.console[type]) {
+      //@ts-ignore
+      globalThis.console[type](...args);
+
+      consoleMessageCount += 1;
+    }
   }
 
   /**

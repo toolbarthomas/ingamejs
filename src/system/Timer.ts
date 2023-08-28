@@ -97,6 +97,6 @@ export class Timer extends Core {
   start(name?: string) {
     this.subscribe(name || Kernel.id);
 
-    Core.info(`Timer started: ${name || Kernel.id}@${Kernel.now()}`);
+    Core.info(`Timer started: ${name || Kernel.id}@${Timer.now()}`);
   }
 }

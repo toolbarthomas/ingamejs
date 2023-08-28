@@ -22,11 +22,6 @@ export class Kernel extends Console {
   // Alias to the initial Kernel namespace value.
   static id = NAME;
 
-  // Alias to the now timestamp methods.
-  static now() {
-    return performance.now() || Date.now();
-  }
-
   constructor(config: ApplicationConfiguration) {
     super();
 
@@ -153,6 +148,10 @@ export class Kernel extends Console {
     return status;
   }
 
+  ready(handler: Function) {
+    window.addEventListener("DOMContentLoaded", handler, { once: true });
+  }
+
   /**
    * Kills the running Web Worker from the given ApplicationHandler and detach
    * it afterwards.
@@ -183,8 +182,6 @@ export class Kernel extends Console {
       );
     }
   }
-
-  setTimeout(fn: ApplicationHandler["fn"]) {}
 
   /**
    * Starts the created Kernel instance and mark it as active.

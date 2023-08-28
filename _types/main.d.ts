@@ -3,6 +3,7 @@ import { AnimationThread } from "@toolbarthomas/animation-thread";
 import { Kernel } from "@/system/Kernel";
 import { Camera } from "@/display/Camera";
 import { Scene } from "@/game/Scene";
+import { Game } from "@/game/Game";
 
 /**
  * Defines the expected configuration Object to use within the running
@@ -99,6 +100,18 @@ export interface DefaultOptions {
  */
 export type FrameProps = AnimationThreadProps;
 
+export interface GameProps {
+  create?: Game["handleCreate"];
+  id: Game["id"];
+  name: Game["name"];
+  init?: Game["handleInit"];
+  preload?: Game["handlePreload"];
+  start?: Game["handleStart"];
+}
+
+export type GameHandlerProps = Game | Scene
+export type GameHandler = (context: GameHandlerProps) => void;
+export type GameHandlerAsync = (callback: (value: number) => void, context: GameHandlerProps)
 /**
  * Defines the optional configuration that can be assigned to the actual
  * ApplicationConfiguration type.
@@ -120,12 +133,11 @@ export interface RenderEngineOptions extends DefaultOptions {
   target: CanvasManagerContext;
 }
 
-export type SceneProps = {
-  active?: Scene["actuve"];
+export interface SceneProps extends GameProps {
+  active?: Scene["active"];
   cameras: Scene["cameras"];
   id: Scene["id"];
-  name: Scene["name"];
-};
+}
 
 /**
  * Defines the custom options for the constructed Timer instance.

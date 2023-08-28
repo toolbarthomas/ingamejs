@@ -11,18 +11,19 @@ export class Scene extends Game {
   name: string;
   active?: boolean;
 
+  handleInit?: SceneProps["init"];
+
   static defaults = {
     active: false,
     id: "scene",
   };
 
   constructor(props: SceneProps) {
-    super();
+    const { active, cameras, create, name, id, init, preload, start } =
+      props || {};
 
-    const { active, cameras, name, id } = props || {};
-    this.name = name || this.constructor.name;
+    super({ create, id, init, name, preload, start });
 
-    this.active = active || Scene.defaults.active;
     this.id = id || Scene.defaults.id;
 
     this.attachCameras(cameras);
@@ -30,7 +31,13 @@ export class Scene extends Game {
     this.events.on(SCENE_CHANGE, this.toggle, this);
 
     Scene.info(`Scene created: ${this.id}`);
+
+    this.init();
+
+    active && this.switch();
   }
+
+  addObject() {}
 
   /**
    * Attach a Camera nameto the current Scene, keep in mind they still need to
@@ -109,11 +116,13 @@ export class Scene extends Game {
 
   /**
    * Switchs to the defined Scene and mark it as active.
+   *
+   * @param cache Call the create handler or try to use the cache when TRUE.
    */
-  start() {
-    this.switch();
-
+  start(cache?: boolean) {
     this.active = true;
+
+    super.start();
   }
 
   /**
@@ -123,11 +132,11 @@ export class Scene extends Game {
    * @param scene Switch to the selected scene.
    */
   switch(scene?: Scene) {
-    this.events.emit(SCENE_CHANGE, scene || this);
-
-    if (!this.active) {
-      this.clearPool();
+    if (scene === this) {
+      this.create();
     }
+
+    this.events.emit(SCENE_CHANGE, scene || this);
   }
 
   /**
@@ -139,6 +148,17 @@ export class Scene extends Game {
   toggle(scene: Scene) {
     if (this.active && scene !== this) {
       this.active = false;
+    }
+
+    if (scene === this && !this.active) {
+      this.active = true;
+
+      this.create();
+      this.start();
+    }
+
+    if (!this.active) {
+      this.clearPool();
     }
   }
 }
