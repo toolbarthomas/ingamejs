@@ -38,6 +38,8 @@ export class Timer extends Core {
    * loops.
    */
   private _defineFPS() {
+    console.log(this.kernel);
+
     try {
       this.fps = this.kernel.config.display.fps;
 

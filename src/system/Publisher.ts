@@ -49,6 +49,8 @@ export class Publisher extends Console {
       return;
     }
 
+    console.log("subscribe", instance, instance instanceof EventStack);
+
     if (instance instanceof EventStack === false) {
       Console.error(`Unable to subscribe invalid instance: ${instance.name}`);
 

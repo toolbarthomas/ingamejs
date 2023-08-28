@@ -4,7 +4,7 @@ import { Timer } from "@system/Timer";
 import { Publisher } from "@system/Publisher";
 
 import { RenderEngine } from "@display/RenderEngine";
-import { Camera } from "@display/Camera";
+import { Camera, Camera } from "@display/Camera";
 import { Scene } from "@game/Scene";
 import events from "@event/Eventbus";
 import { SERVICE_PRELOAD } from "./event/eventTypes";
@@ -12,44 +12,59 @@ import { SERVICE_PRELOAD } from "./event/eventTypes";
 import { CanvasManager } from "@display/CanvasManager";
 import { Service } from "@system/Service";
 import { EventStack } from "./system/EventStack";
+import { ApplicationConfiguration, InstanceConfiguration } from "thundershock";
 
-window.addEventListener(
-  "DOMContentLoaded",
-  () => {
-    const config = defineConfiguration({
-      name: "bar",
-    });
+class Thundershock {
+  config: ApplicationConfiguration;
+  kernel: Kernel;
+  timer: Timer;
+
+  constructor(config?: InstanceConfiguration) {
+    this.config = defineConfiguration(config);
 
     // Create the Root instance that is shared within the running Application.
-    const kernel = new Kernel(config);
+    const kernel = new Kernel(this.config);
+    this.kernel = kernel;
+
+    this.timer = new Timer(kernel, { autostart: true });
 
     // Setup the Service pool that will be used within the constructed
     // application services.
     const pool = new Publisher();
 
-    // // Attach the constructed Service pool for all services
-    // kernel.events.on(PUBLISHER_REQUEST, (instance?: EventStack) => {
-    //   instance && instance.definePool && instance.definePool(pool);
-    // });
-
-    const timer = new Timer(kernel, { autostart: true });
-
+    const camera = new Camera(kernel, {
+      x: 0,
+      y: 0,
+      width: kernel.config.display.width,
+      height: kernel.config.display.height,
+    });
     const canvasManager = new CanvasManager(kernel);
-    canvasManager.resizeContext(
-      kernel.config.display.width,
-      kernel.config.display.height
-    );
 
     const renderEngine = new RenderEngine(kernel, {
       target: canvasManager.useContext(),
     });
 
-    // Setup the default Camera.
-    const camera = new Camera(kernel, {
-      x: 0,
-      y: 0,
-      width: canvasManager.useContext().width || kernel.config.display.width,
-      height: canvasManager.useContext().height || kernel.config.display.height,
+    pool.subscribe("Camera", camera);
+    pool.subscribe("CanvasManager", canvasManager);
+    pool.subscribe("RenderEngine", renderEngine);
+
+    // Set the initial width and height for the display.
+    canvasManager.resizeContext(
+      kernel.config.display.width,
+      kernel.config.display.height
+    );
+
+    this.kernel.start();
+
+    this.timer.autostart && this.timer.start();
+  }
+}
+
+window.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    const application = new Thundershock({
+      name: "bar",
     });
 
     // Proof of concept scene setup:
@@ -72,21 +87,6 @@ window.addEventListener(
     console.log("Camera", myCamera);
 
     console.log("scene1", scene1);
-
-    // Startup the created Kernel with the bootstrapped dependencies.
-    kernel.start();
-
-    // kernel.attach(
-    //   Kernel.id,
-    //   (props) => {
-    //     console.log("draw", props.fps);
-    //     renderEngine.draw(props);
-    //   },
-    //   { main: true }
-    // );
-
-    // Start the main loop
-    timer.autostart && timer.start();
   },
   { once: true }
 );
