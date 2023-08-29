@@ -17,8 +17,10 @@ import { Kernel } from "@system/Kernel";
 import { Service } from "@system/Service";
 import { Timer } from "@system/Timer";
 
+import { GameObject } from "@game/GameObject";
 import { Publisher } from "@system/Publisher";
 import { Scene } from "@game/Scene";
+import { Subscriber } from "./system/Subscriber";
 
 /**
  * The entry Class for creating a new Thundershock game.
@@ -67,6 +69,7 @@ class Thundershock {
 
     Kernel.info(`Object created: ${type}`, payload);
 
+    //@ts-ignore
     return new globalThis[type](payload);
   }
 
@@ -76,7 +79,12 @@ class Thundershock {
    * @param props Create a new scene with the defined Scene properties.
    */
   addScene(props: SceneProps) {
-    const scene = this.add("Scene", props) as Scene;
+    const { cameras, ...rest } = props;
+
+    const scene = this.add("Scene", {
+      ...rest,
+      cameras: cameras || [this.defaults.Camera.name],
+    }) as Scene;
 
     this.pool.subscribe(scene.id, scene);
 
@@ -89,13 +97,24 @@ class Thundershock {
    */
   init() {
     // Defines at least one Camera, more can be created during development or
-    // runtime.
-    const camera = new Camera(this.kernel, {
+    // runtime. A Camera will assign itself to the Pool automatically and can
+    // be defined directly within the context. This ensure that the Pool only
+    // contains unique Camera instances.
+    new Camera(this.kernel, {
       x: 0,
       y: 0,
       width: this.kernel.config.display.width,
       height: this.kernel.config.display.height,
     });
+
+    new Camera(this.kernel, { name: "Camera2" });
+
+    // const camera2 = new Camera(this.kernel, {
+    //   x: 0,
+    //   y: 0,
+    //   width: this.kernel.config.display.width,
+    //   height: this.kernel.config.display.height,
+    // });
 
     // Use the Canvas Manager to manage the existing canvas element.
     const canvasManager = new CanvasManager(this.kernel);
@@ -106,15 +125,18 @@ class Thundershock {
     });
 
     // Assign the default libraries to the Service pool.
-    this.pool.subscribe("Camera", camera);
     this.pool.subscribe("CanvasManager", canvasManager);
     this.pool.subscribe("RenderEngine", renderEngine);
+
+    this.pool.subscribe("GameObject", GameObject);
 
     // Set the initial width and height for the display.
     canvasManager.resizeContext(
       this.kernel.config.display.width,
       this.kernel.config.display.height
     );
+
+    console.log("POOL", this.pool);
 
     // Signal the libraries that the Kernel has started.
     this.kernel.start();
@@ -124,9 +146,7 @@ class Thundershock {
 /**
  * Construct the ThunderShock framework.
  */
-const application = new Thundershock({
-  name: "bar",
-});
+const application = new Thundershock();
 
 /**
  * Implements the actual Game.
@@ -134,7 +154,6 @@ const application = new Thundershock({
 application.kernel.events.on(KERNEL_START, () => {
   const scene = application.addScene({
     id: "scene1",
-    cameras: [application.defaults.Camera.name],
     preload(callback, context) {
       setTimeout(() => {
         console.log("foobar");
@@ -145,15 +164,46 @@ application.kernel.events.on(KERNEL_START, () => {
     init() {
       console.log("Scene init");
     },
+    create(scene: Scene) {
+      const go = scene.add("GameObject", {
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+      });
+
+      // const go2 = scene.add("GameObject", {
+      //   x: 0,
+      //   y: 0,
+      //   width: 100,
+      //   height: 50,
+      // });
+
+      // const go3 = scene.add("GameObject", {
+      //   x: 0,
+      //   y: 0,
+      //   width: 50,
+      //   height: 25,
+      // });
+
+      // const go4 = scene.add("Sprite", {
+      //   x: 0,
+      //   y: 0,
+      //   width: 50,
+      //   height: 25,
+      // });
+
+      console.log("Create some magic", go, scene);
+    },
     start() {
       console.log("scene start");
     },
-    create(context) {
-      console.log("Create some magic", context);
-    },
   });
 
-  scene.start();
+  // scene.start();
+  scene.create();
+  scene.destroy();
+  console.log("SCENE", scene);
 
   // scene.start();
 });

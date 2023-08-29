@@ -1,4 +1,5 @@
 import EventEmitter from "eventemitter3";
+import { EventHandler } from "thundershock";
 
 /**
  * The Eventbus is a wrapper around the Event Emitter module. A singleton
@@ -16,11 +17,11 @@ export class EventBus {
     return this.emitter.emit(name, ...args);
   }
 
-  on(name: string, handler: Function, context?: any) {
+  on(name: string, handler: EventHandler, context?: any) {
     return this.emitter.on(name, handler, context);
   }
 
-  off(name: string, handler: Function, context?: any) {
+  off(name: string, handler: EventHandler, context?: any) {
     return this.emitter.off(name, handler, context);
   }
 }

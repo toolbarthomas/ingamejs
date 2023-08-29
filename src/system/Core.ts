@@ -1,14 +1,14 @@
 import { ApplicationConfiguration, InstanceConfiguration } from "thundershock";
 
 import { Kernel } from "@system/Kernel";
-import { EventStack } from "@system/EventStack";
-import { validateConfiguration } from "@/system/config";
+import { validateConfiguration } from "@system/config";
+import { Subscriber } from "./Subscriber";
 
 /**
  * Implements the Core functionality for the private modules that share the
  * running Kernel instance.
  */
-export class Core extends EventStack {
+export class Core extends Subscriber {
   config: ApplicationConfiguration;
   kernel: Kernel;
   name: string;

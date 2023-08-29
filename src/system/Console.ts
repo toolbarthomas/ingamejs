@@ -15,6 +15,12 @@ let consoleMessageCount = 0;
  * Console helper to use instead of the default console.
  */
 export class Console {
+  name: string;
+
+  constructor() {
+    this.name = this.constructor.name;
+  }
+
   /**
    * Console helper that use the console.error method, the output is not cleared
    * while using this method but should throw an Exception.

@@ -1,8 +1,9 @@
 import events, { EventBus } from "@event/Eventbus";
-import { PUBLISHER_GET, PUBLISHER_SET } from "@/event/eventTypes";
+import { PUBLISHER_GET, PUBLISHER_SET } from "@event/eventTypes";
 
 import { Console } from "@system/Console";
 import { Publisher } from "@system/Publisher";
+import { PublisherInstance } from "thundershock";
 
 /**
  * The EventStack implements the constructed Event Emitter and enables the
@@ -10,7 +11,7 @@ import { Publisher } from "@system/Publisher";
  */
 export class EventStack extends Console {
   events: EventBus;
-  pool: Publisher = {};
+  pool: { [key: string]: PublisherInstance } = {};
 
   constructor() {
     super();

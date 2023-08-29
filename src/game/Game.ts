@@ -1,9 +1,9 @@
 import { GameHandler, GameHandlerAsync, GameProps } from "thundershock";
 
-import { EventStack } from "@/system/EventStack";
+import { Subscriber } from "@/system/Subscriber";
 import { Kernel } from "@/system/Kernel";
 
-export class Game extends EventStack {
+export class Game extends Subscriber {
   id: string;
   name: string;
   handleCreate?: GameHandler;
@@ -34,21 +34,34 @@ export class Game extends EventStack {
     this.init();
   }
 
+  /**
+   * The entry handler that will be called after the preload handler and before
+   * the start handler. For example: A scene should use this method to define
+   * the Game Objects for the scene.
+   */
   create() {
     if (typeof this.handleCreate === "function") {
-      this.handleCreate(this);
+      this.handleCreate && this.handleCreate(this);
       this.lastCreate = Game.now();
     }
   }
 
+  /**
+   * The entry handler that will be called during the construction of the Game
+   * instance.
+   */
   init() {
     if (typeof this.handleInit === "function") {
-      this.handleInit(this);
+      this.handleInit && this.handleInit(this);
 
       this.lastInit = Game.now();
     }
   }
 
+  /**
+   * The entry handler that will be called before the other handlers: create &
+   * start.
+   */
   preload() {
     const request = new Promise<number>((resolve) => {
       if (this.preloading) {
@@ -56,7 +69,7 @@ export class Game extends EventStack {
       }
 
       if (!this.preloading && typeof this.handlePreload === "function") {
-        this.handlePreload(resolve, this);
+        this.handlePreload && this.handlePreload(resolve, this);
 
         this.lastPreload = Game.now();
 
@@ -83,15 +96,19 @@ export class Game extends EventStack {
     return request;
   }
 
+  /**
+   * The entry start handler that should be called at the end of the other
+   * methods: create, preload, init,
+   */
   start() {
     if (typeof this.handleStart === "function") {
       if (this.preloaded) {
         this.create();
-        this.handleStart(this);
+        this.handleStart && this.handleStart(this);
       } else {
         this.preload().then(() => {
           this.create();
-          this.handleStart(this);
+          this.handleStart && this.handleStart(this);
 
           this.lastStart = Game.now();
         });

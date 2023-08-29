@@ -1,9 +1,10 @@
 import { AnimationThreadProps } from "@toolbarthomas/animation-thread/src/_types/main";
 import { AnimationThread } from "@toolbarthomas/animation-thread";
-import { Kernel } from "@/system/Kernel";
-import { Camera } from "@/display/Camera";
-import { Scene } from "@/game/Scene";
-import { Game } from "@/game/Game";
+import { Kernel } from "@system/Kernel";
+import { Camera } from "@display/Camera";
+import { Scene } from "@game/Scene";
+import { Game } from "@game/Game";
+import { GameObject } from "@game/GameObject";
 
 /**
  * Defines the expected configuration Object to use within the running
@@ -11,6 +12,8 @@ import { Game } from "@/game/Game";
  */
 export type ApplicationConfiguration = {
   display: {
+    alpha?: boolean;
+
     // Run the main loop within the defined FPS value.
     fps: number;
 
@@ -85,7 +88,13 @@ export type CameraProps = {
 /**
  * The Canvas element to use for the application.
  */
-export type CanvasManagerContext = HTMLCanvasElement;
+export type CanvasManagerContext = {
+  // Canvas container that renders the actual Game
+  display: HTMLCanvasElement;
+
+  // Canvas container that renders the Game objects.
+  pipeline: HTMLCanvasElement;
+};
 
 /**
  * Defines the default options to use when extending from the Core class.
@@ -94,6 +103,8 @@ export interface DefaultOptions {
   config?: ApplicationConfiguration;
 }
 
+export type EventHandler = (...args: any[]) => void;
+
 /**
  * Reference to the actual frame related properties defined
  * @toolbarthomas/animation-thread.
@@ -101,23 +112,34 @@ export interface DefaultOptions {
 export type FrameProps = AnimationThreadProps;
 
 export interface GameProps {
-  create?: Game["handleCreate"];
   id: Game["id"];
-  name: Game["name"];
+  name?: Game["name"];
+  create?: Game["handleCreate"];
   init?: Game["handleInit"];
   preload?: Game["handlePreload"];
   start?: Game["handleStart"];
 }
 
-export type GameHandlerProps = Game | Scene
-export type GameHandler = (context: GameHandlerProps) => void;
-export type GameHandlerAsync = (callback: (value: number) => void, context: GameHandlerProps)
+export interface GameObjectProps {
+  x: GameObject["x"];
+  y: GameObject["y"];
+  width: GameObject["width"];
+  height: GameObject["height"];
+}
+
+export type GameObjects = GameObject;
+export type GameHandler = (context: any) => void;
+export type GameHandlerAsync = (
+  callback: (value: number) => void,
+  context: any
+) => void;
 /**
  * Defines the optional configuration that can be assigned to the actual
  * ApplicationConfiguration type.
  */
 export type InstanceConfiguration = {
   display?: {
+    alpha?: ApplicationConfiguration["display"]["alpha"];
     fps?: ApplicationConfiguration["display"]["fps"];
     height?: ApplicationConfiguration["display"]["height"];
     id?: ApplicationConfiguration["display"]["id"];
@@ -126,7 +148,7 @@ export type InstanceConfiguration = {
   };
 };
 
-export type PublisherInstance = Camera;
+export type PublisherInstance = Camera | GameObjects;
 export type PublisherInstances = { [key: string]: PublisherInstance };
 
 export interface RenderEngineOptions extends DefaultOptions {
@@ -135,7 +157,7 @@ export interface RenderEngineOptions extends DefaultOptions {
 
 export interface SceneProps extends GameProps {
   active?: Scene["active"];
-  cameras: Scene["cameras"];
+  cameras?: Scene["cameras"];
   id: Scene["id"];
 }
 

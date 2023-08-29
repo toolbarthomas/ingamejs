@@ -148,7 +148,7 @@ export class Kernel extends Console {
     return status;
   }
 
-  ready(handler: Function) {
+  ready(handler: any) {
     window.addEventListener("DOMContentLoaded", handler, { once: true });
   }
 

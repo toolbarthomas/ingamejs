@@ -1,17 +1,48 @@
-import { Camera } from "@/display/Camera";
+import { Camera } from "@display/Camera";
 import { Game } from "@game/Game";
 
-import { SCENE_CHANGE } from "@event/eventTypes";
+import { PUBLISHER_DELETE, SCENE_CHANGE } from "@event/eventTypes";
 
-import { SceneProps } from "thundershock";
+import {
+  GameObjectProps,
+  GameObjects,
+  GameProps,
+  SceneProps,
+} from "thundershock";
+import { GameObject } from "./GameObject";
 
+/**
+ * The Scene class is the main interface for constructing the actual game.
+ * This interface is exposed within a Thundershock application via
+ * Thundershock.addScene('Name', ...). Where the create, update, init & start
+ * handlers can be defined that will setup the actual Scene.
+ *
+ * You can request any subscribed Service pool library on demand within the
+ * mentioned handlers by using Scene.get().
+ * This will request the existing library like the Rendering Engine, GameObject
+ * constructor and many more.
+ *
+ * Only 1 Scene can be active for the actual game but multiple camera's can be
+ * used within the Scene. See @display/Camera for more information about this.
+ * The active property will updated during a SCENE_CHANGE event and will be
+ * TRUE if the given context matches with the defined Scene.
+ *
+ */
 export class Scene extends Game {
   cameras: Camera["name"][] = [];
-  id: string;
-  name: string;
+  created?: boolean;
   active?: boolean;
 
-  handleInit?: SceneProps["init"];
+  /**
+   * Containes all the created Game Objects for the current scene. A copy of
+   * the unique visual result will be rendered within the Canvas Pipeline that
+   * is shared by the actual display. This means that duplciate Object entries
+   * (with matching transformation values) are fetched from the single result
+   * within the pipeline. Multiple variants of the constructed Game Object will
+   * be rendered within the pipeline if there is more than 1 Camera defined for
+   * the current Scene.
+   */
+  private _gameObjects: { [key: string]: GameObjects } = {};
 
   static defaults = {
     active: false,
@@ -37,7 +68,38 @@ export class Scene extends Game {
     active && this.switch();
   }
 
-  addObject() {}
+  /**
+   * Adds a new Object to the current scene.
+   */
+  add(type: any, props: GameObjectProps) {
+    this.get(type);
+
+    let instance: any;
+
+    try {
+      const [base64] = btoa(JSON.stringify(props || {})).split("==");
+      const id = `${type}__${base64}`;
+
+      if (this._gameObjects[id]) {
+        Scene.warning(`Unable to add identical Object to scene: ${id}`);
+        instance = this._gameObjects[id];
+      } else if (Object.keys(this.pool).includes(type)) {
+        instance = new (this.pool as any)[type](id, props);
+
+        this._gameObjects[id] = instance;
+      }
+    } catch (exception) {
+      if (exception) {
+        Scene.error(exception);
+      }
+    }
+
+    if (!instance) {
+      Scene.error(`Unable to add undefined ${type} to current scene.`);
+    }
+
+    return instance as GameObject;
+  }
 
   /**
    * Attach a Camera nameto the current Scene, keep in mind they still need to
@@ -63,7 +125,7 @@ export class Scene extends Game {
    * Attaches the selected Camera names to the current Scene, keep in mind that
    * they still need to be requested from the pool.
    */
-  attachCameras(cameras: Scene["cameras"]) {
+  attachCameras(cameras?: Scene["cameras"]) {
     if (Array.isArray(cameras)) {
       this.cameras = [...new Set([...(this.cameras || []), ...cameras])];
     } else if (!this.cameras) {
@@ -104,14 +166,54 @@ export class Scene extends Game {
     [...this.cameras].forEach((camera) => this.clearCamera(camera));
   }
 
+  create() {
+    if (!this.created) {
+      super.create();
+      this.created = true;
+    }
+  }
+
+  /**
+   * Removes the created Game Objects from the defined scene and reset the
+   * additional scene flags and notify the camera to ignore the current Scene.
+   */
+  destroy() {
+    if (this._gameObjects instanceof Object) {
+      const entries = Object.entries(this._gameObjects);
+
+      entries.forEach(([name, gameObject]) => {
+        delete this._gameObjects[name];
+
+        this.events.emit(PUBLISHER_DELETE, gameObject);
+      });
+    }
+
+    this.preloaded = false;
+    this.created = false;
+
+    this.active = false;
+
+    this.events.emit(SCENE_CHANGE);
+
+    Scene.info(`Scene destroyed`, this);
+  }
+
+  /**
+   * Ensure the existing Camera is returned since various instance types are
+   * present within the Scene pool.
+   *
+   * @param name The name of the existing Camera to return
+   */
   getCamera(name = Camera.defaults.name) {
     this.get(name);
 
     if (this.pool[name] && this.pool[name] instanceof Camera) {
-      return this.pool[name] as Camera;
-    } else if (this.pool[name]) {
-      delete this.pool[name];
+      const pool: unknown = this.pool[name];
+
+      return pool as Camera;
     }
+
+    return;
   }
 
   /**
@@ -121,6 +223,8 @@ export class Scene extends Game {
    */
   start(cache?: boolean) {
     this.active = true;
+
+    this.switch(this);
 
     super.start();
   }
@@ -134,6 +238,8 @@ export class Scene extends Game {
   switch(scene?: Scene) {
     if (scene === this) {
       this.create();
+    } else {
+      this.created = false;
     }
 
     this.events.emit(SCENE_CHANGE, scene || this);

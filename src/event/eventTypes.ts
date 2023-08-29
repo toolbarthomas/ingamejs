@@ -5,9 +5,11 @@
 
 // Signal that the Kernel has started.
 export const KERNEL_START = "thundershock.kernel:start";
+export const KERNEL_UPDATE = "thundershock.kernel:update";
 
 export const PUBLISHER_GET = "thundershock.publisher.get";
 export const PUBLISHER_SET = "thundershock.publisher.set";
+export const PUBLISHER_DELETE = "thundershock.publisher.delete";
 
 // Signal when a Service class is constructed.
 export const SERVICE_PRELOAD = "thundershock.service:preload";

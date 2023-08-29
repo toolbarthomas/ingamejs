@@ -1,10 +1,14 @@
-import { PublisherInstances } from "thundershock";
+import { PublisherInstance, PublisherInstances } from "thundershock";
 
 import { Service } from "@system/Service";
 import { Console } from "@system/Console";
-import { EventStack } from "@system/EventStack";
-import { PUBLISHER_GET, PUBLISHER_SET } from "@/event/eventTypes";
-import events, { EventBus } from "@/event/Eventbus";
+import { Subscriber } from "@system/Subscriber";
+import {
+  PUBLISHER_DELETE,
+  PUBLISHER_GET,
+  PUBLISHER_SET,
+} from "@event/eventTypes";
+import events, { EventBus } from "@event/Eventbus";
 
 /**
  * A Publisher is a simple Interface for storing existing classes that are
@@ -22,17 +26,29 @@ export class Publisher extends Console {
     this.events.on(PUBLISHER_SET, this.set, this);
 
     this.events.on(PUBLISHER_GET, this.get, this);
+
+    this.events.on(PUBLISHER_DELETE, this.delete, this);
   }
 
-  get(instance: EventStack, name: string) {
+  delete(instance: PublisherInstance) {
+    this.withdaw(instance.constructor.name || instance.name, instance);
+  }
+
+  get(instance: Subscriber, name: string) {
     if (name && instance && instance.pool instanceof Object) {
-      instance.pool[name] = this.publish(name);
+      const commit = this.publish(name);
+
+      if (!commit) {
+        Publisher.warning(`Unable to get ${name}...`);
+      } else {
+        instance.pool[name] = commit;
+      }
     } else {
       Publisher.warning(`Unable to complete get from ${instance.name}`);
     }
   }
 
-  set(instance: EventStack, name: string) {
+  set(instance: Subscriber, name: string) {
     console.log("set", instance, instance.pool);
 
     if (name && instance && instance.pool instanceof Object) {
@@ -49,7 +65,7 @@ export class Publisher extends Console {
       return;
     }
 
-    if (instance instanceof EventStack === false) {
+    if (!instance.subscriber && !instance.subscriber) {
       Console.error(`Unable to subscribe invalid instance: ${instance.name}`);
 
       return;
@@ -57,7 +73,8 @@ export class Publisher extends Console {
 
     if (this.instances[name]) {
       Console.warning(
-        `Unable to overwrite existing instance, you need to remove it first.`
+        `Unable to overwrite existing instance: ${name} =>`,
+        this.instances[name]
       );
 
       return;
@@ -66,7 +83,13 @@ export class Publisher extends Console {
     // Ensure duplicate Publisher instances are not included
     this.instances[name] = instance;
 
-    Publisher.info(`Instance subscribed: ${name} => ${instance.name}`);
+    if (instance._spawn) {
+      Publisher.info(`Constructor subscribed: ${name} => ${instance.name}`);
+    } else {
+      Publisher.info(
+        `Instance subscribed: ${name} => ${instance.name || instance.id}`
+      );
+    }
   }
 
   list(instance: any) {
@@ -77,14 +100,31 @@ export class Publisher extends Console {
     return Object.values(this.instances);
   }
 
-  publish(name) {
-    console.log("publish", name);
-    if (!name || !this.instances[name]) {
+  publish(name: string) {
+    if (!name) {
       Publisher.warning("Unable to publish undefined instance.");
 
       return;
     }
 
+    if (!this.instances[name]) {
+      Publisher.warning(
+        `Unable to publish: ${name}, you need to subscribe ${name} to the Publisher instance.`
+      );
+
+      return;
+    }
+
     return this.instances[name];
+  }
+
+  withdaw(name: string, instance: PublisherInstance) {
+    console.log("Witdraw", instance, this.instances);
+
+    if (this.instances[name] && this.instances[name] === instance) {
+      // delete this.instances[name];
+
+      Publisher.info(`Subscription withdrawn from: ${this.name} => ${name}`);
+    }
   }
 }

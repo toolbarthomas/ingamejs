@@ -10,6 +10,7 @@ export const config: ApplicationConfiguration = {
     id: "thundershock",
     type: "2d",
     width: 800,
+    alpha: false,
   },
 };
 
