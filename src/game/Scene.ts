@@ -173,6 +173,8 @@ export class Scene extends Game {
 
   create() {
     if (!this.created) {
+      Scene.info(`Create scene: ${this.id}`);
+
       super.create();
       this.created = true;
     }
@@ -208,7 +210,6 @@ export class Scene extends Game {
       // Handle the attached preload handler to ensure all the required Game
       // Objects are defined within the Scene.
       await super.preload();
-
       // Preload all the attached GameObject from the current scene for the
       // Objects that use that actual preload method interface.
       const queue = Object.values(this._gameObjects)
@@ -221,7 +222,13 @@ export class Scene extends Game {
         })
         .filter((obj) => obj !== undefined);
 
+      if (queue.length) {
+        Scene.info(`Scene preloaded, loading existing game Objects:`);
+      }
+
       Promise.all(queue).then((result) => {
+        Scene.info(`Game Objects loaded for scene: ${this.id}`);
+
         resolve(200);
       });
     });
@@ -265,10 +272,10 @@ export class Scene extends Game {
    * @param scene Switch to the selected scene.
    */
   switch(scene?: Scene) {
-    if (scene === this) {
+    if (scene === this && this.preloaded) {
       this.create();
-    } else {
-      this.created = false;
+    } else if (scene && scene !== this) {
+      this.destroy();
     }
 
     this.events.emit(SCENE_CHANGE, scene || this);

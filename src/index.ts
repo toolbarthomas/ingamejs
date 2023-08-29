@@ -150,6 +150,8 @@ application.kernel.events.on(KERNEL_START, () => {
   const scene = application.addScene({
     id: "scene1",
     preload(callback, context) {
+      console.log("Preload my scene");
+
       const go = scene.add("ImageObject", {
         x: 0,
         y: 0,
@@ -158,11 +160,7 @@ application.kernel.events.on(KERNEL_START, () => {
         src: "/example.png",
       });
 
-      setTimeout(() => {
-        console.log("foobar");
-
-        callback(200);
-      }, 3000);
+      callback(200);
     },
     init() {
       console.log("Scene init");

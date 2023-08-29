@@ -20,7 +20,6 @@ export class Publisher extends Console {
 
   constructor() {
     super();
-
     this.events = events;
 
     this.events.on(PUBLISHER_SET, this.set, this);
