@@ -1,4 +1,4 @@
-import events, { EventBus } from "@event/Eventbus";
+import events, { EventBus } from "@event/EventBus";
 import { PUBLISHER_GET, PUBLISHER_SET } from "@event/eventTypes";
 
 import { Console } from "@system/Console";
@@ -28,7 +28,7 @@ export class EventStack extends Console {
 
       this.pool = {};
 
-      Console.log(`${this.name} service pool cleared: ${keys.join(", ")}`);
+      EventStack.log(`${this.name} service pool cleared: ${keys.join(", ")}`);
     }
   }
 

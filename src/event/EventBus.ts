@@ -2,7 +2,7 @@ import EventEmitter from "eventemitter3";
 import { EventHandler } from "thundershock";
 
 /**
- * The Eventbus is a wrapper around the Event Emitter module. A singleton
+ * The EventBus is a wrapper around the Event Emitter module. A singleton
  * instance is created within this entry file that is attached to the running
  * Kernel.
  */

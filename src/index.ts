@@ -4,8 +4,8 @@ import {
   SceneProps,
 } from "thundershock";
 
-import { KERNEL_START, SERVICE_PRELOAD } from "@event/eventTypes";
-import events from "@event/Eventbus";
+import { KERNEL_INIT, KERNEL_START, SERVICE_PRELOAD } from "@event/eventTypes";
+import events from "@event/EventBus";
 
 import { Camera } from "@display/Camera";
 import { CanvasManager } from "@display/CanvasManager";
@@ -18,9 +18,11 @@ import { Service } from "@system/Service";
 import { Timer } from "@system/Timer";
 
 import { GameObject } from "@game/GameObject";
-import { Publisher } from "@system/Publisher";
+import { ImageObject } from "@game/ImageObject";
 import { Scene } from "@game/Scene";
-import { Subscriber } from "./system/Subscriber";
+
+import { Publisher } from "@system/Publisher";
+import { Subscriber } from "@system/Subscriber";
 
 /**
  * The entry Class for creating a new Thundershock game.
@@ -96,6 +98,7 @@ class Thundershock {
    * interact with the created game Objects.
    */
   init() {
+    this.kernel.events.emit(KERNEL_INIT, this.config);
     // Defines at least one Camera, more can be created during development or
     // runtime. A Camera will assign itself to the Pool automatically and can
     // be defined directly within the context. This ensure that the Pool only
@@ -108,13 +111,6 @@ class Thundershock {
     });
 
     new Camera(this.kernel, { name: "Camera2" });
-
-    // const camera2 = new Camera(this.kernel, {
-    //   x: 0,
-    //   y: 0,
-    //   width: this.kernel.config.display.width,
-    //   height: this.kernel.config.display.height,
-    // });
 
     // Use the Canvas Manager to manage the existing canvas element.
     const canvasManager = new CanvasManager(this.kernel);
@@ -129,14 +125,13 @@ class Thundershock {
     this.pool.subscribe("RenderEngine", renderEngine);
 
     this.pool.subscribe("GameObject", GameObject);
+    this.pool.subscribe("ImageObject", ImageObject);
 
     // Set the initial width and height for the display.
     canvasManager.resizeContext(
       this.kernel.config.display.width,
       this.kernel.config.display.height
     );
-
-    console.log("POOL", this.pool);
 
     // Signal the libraries that the Kernel has started.
     this.kernel.start();
@@ -155,6 +150,14 @@ application.kernel.events.on(KERNEL_START, () => {
   const scene = application.addScene({
     id: "scene1",
     preload(callback, context) {
+      const go = scene.add("ImageObject", {
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        src: "/example.png",
+      });
+
       setTimeout(() => {
         console.log("foobar");
 
@@ -165,13 +168,6 @@ application.kernel.events.on(KERNEL_START, () => {
       console.log("Scene init");
     },
     create(scene: Scene) {
-      const go = scene.add("GameObject", {
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 50,
-      });
-
       // const go2 = scene.add("GameObject", {
       //   x: 0,
       //   y: 0,
@@ -193,17 +189,12 @@ application.kernel.events.on(KERNEL_START, () => {
       //   height: 25,
       // });
 
-      console.log("Create some magic", go, scene);
+      console.log("Create some magic", scene);
     },
     start() {
       console.log("scene start");
     },
   });
 
-  // scene.start();
-  scene.create();
-  scene.destroy();
-  console.log("SCENE", scene);
-
-  // scene.start();
+  scene.start();
 });

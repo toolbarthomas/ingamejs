@@ -5,7 +5,7 @@ import {
   TimerSubscribtionName,
 } from "thundershock";
 
-import events, { EventBus } from "@event/Eventbus";
+import events, { EventBus } from "@event/EventBus";
 import { KERNEL_START } from "@event/eventTypes";
 import { Console } from "@system/Console";
 import { Core } from "@system/Core";
@@ -27,7 +27,7 @@ export class Kernel extends Console {
 
     this.config = config;
 
-    Kernel.info("Kernel Loaded");
+    Kernel.log(`${Kernel.id} kernel defined...`, this.config);
   }
 
   /**
@@ -303,9 +303,9 @@ export class Kernel extends Console {
                 // Timeout the constructed Web Worker and terminate afterwards.
                 queue[i].timeout = setTimeout(
                   () => {
-                    console.log("timeout in", queue[i].fn, [...this.queue]);
+                    Kernel.log("timeout in", queue[i].fn, [...this.queue]);
                     this.kill(queue[i]);
-                    console.log(
+                    Kernel.log(
                       "timeout out",
                       duration,
                       duration - 1000 / props.targetFPS

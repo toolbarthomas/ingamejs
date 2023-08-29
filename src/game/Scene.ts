@@ -7,6 +7,7 @@ import {
   GameObjectProps,
   GameObjects,
   GameProps,
+  ImageObjectProps,
   SceneProps,
 } from "thundershock";
 import { GameObject } from "./GameObject";
@@ -71,13 +72,13 @@ export class Scene extends Game {
   /**
    * Adds a new Object to the current scene.
    */
-  add(type: any, props: GameObjectProps) {
+  add(type: any, props: GameObjectProps | ImageObjectProps) {
     this.get(type);
 
     let instance: any;
 
     try {
-      const [base64] = btoa(JSON.stringify(props || {})).split("==");
+      const [base64] = btoa(JSON.stringify(props || {})).split("=");
       const id = `${type}__${base64}`;
 
       if (this._gameObjects[id]) {
@@ -85,6 +86,10 @@ export class Scene extends Game {
         instance = this._gameObjects[id];
       } else if (Object.keys(this.pool).includes(type)) {
         instance = new (this.pool as any)[type](id, props);
+
+        if (typeof instance.init === "function") {
+          instance.init();
+        }
 
         this._gameObjects[id] = instance;
       }
@@ -196,6 +201,30 @@ export class Scene extends Game {
     this.events.emit(SCENE_CHANGE);
 
     Scene.info(`Scene destroyed`, this);
+  }
+
+  preload() {
+    return new Promise<number>(async (resolve) => {
+      // Handle the attached preload handler to ensure all the required Game
+      // Objects are defined within the Scene.
+      await super.preload();
+
+      // Preload all the attached GameObject from the current scene for the
+      // Objects that use that actual preload method interface.
+      const queue = Object.values(this._gameObjects)
+        .map((gameObject) => {
+          if (typeof gameObject.preload === "function") {
+            return gameObject.preload();
+          }
+
+          return undefined;
+        })
+        .filter((obj) => obj !== undefined);
+
+      Promise.all(queue).then((result) => {
+        resolve(200);
+      });
+    });
   }
 
   /**

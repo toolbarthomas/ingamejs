@@ -8,7 +8,7 @@ import {
   PUBLISHER_GET,
   PUBLISHER_SET,
 } from "@event/eventTypes";
-import events, { EventBus } from "@event/Eventbus";
+import events, { EventBus } from "@event/EventBus";
 
 /**
  * A Publisher is a simple Interface for storing existing classes that are
@@ -49,8 +49,6 @@ export class Publisher extends Console {
   }
 
   set(instance: Subscriber, name: string) {
-    console.log("set", instance, instance.pool);
-
     if (name && instance && instance.pool instanceof Object) {
       this.subscribe(name, instance);
     } else {
@@ -84,9 +82,9 @@ export class Publisher extends Console {
     this.instances[name] = instance;
 
     if (instance._spawn) {
-      Publisher.info(`Constructor subscribed: ${name} => ${instance.name}`);
+      Publisher.log(`Constructor subscribed: ${name} => ${instance.name}`);
     } else {
-      Publisher.info(
+      Publisher.log(
         `Instance subscribed: ${name} => ${instance.name || instance.id}`
       );
     }
@@ -119,8 +117,6 @@ export class Publisher extends Console {
   }
 
   withdaw(name: string, instance: PublisherInstance) {
-    console.log("Witdraw", instance, this.instances);
-
     if (this.instances[name] && this.instances[name] === instance) {
       // delete this.instances[name];
 

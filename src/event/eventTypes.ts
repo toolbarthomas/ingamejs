@@ -1,11 +1,12 @@
 /**
  * Contains the Event name definitions that is used by the constructed EventBus
- * singleton: e.g. (import events from './Eventbus').
+ * singleton: e.g. (import events from './EventBus').
  */
 
 // Signal that the Kernel has started.
 export const KERNEL_START = "thundershock.kernel:start";
 export const KERNEL_UPDATE = "thundershock.kernel:update";
+export const KERNEL_INIT = "thundershock.kernel:init";
 
 export const PUBLISHER_GET = "thundershock.publisher.get";
 export const PUBLISHER_SET = "thundershock.publisher.set";

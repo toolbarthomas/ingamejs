@@ -1,16 +1,22 @@
-import { AnimationThreadProps } from "@toolbarthomas/animation-thread/src/_types/main";
 import { AnimationThread } from "@toolbarthomas/animation-thread";
+import { AnimationThreadProps } from "@toolbarthomas/animation-thread/src/_types/main";
+
 import { Kernel } from "@system/Kernel";
 import { Camera } from "@display/Camera";
-import { Scene } from "@game/Scene";
+
 import { Game } from "@game/Game";
 import { GameObject } from "@game/GameObject";
+import { ImageObject } from "@game/ImageObject";
+import { Scene } from "@game/Scene";
 
 /**
  * Defines the expected configuration Object to use within the running
  * application.
  */
 export type ApplicationConfiguration = {
+  console: {
+    verbose?: boolean;
+  };
   display: {
     alpha?: boolean;
 
@@ -127,6 +133,10 @@ export interface GameObjectProps {
   height: GameObject["height"];
 }
 
+export interface ImageObjectProps extends GameObjectProps {
+  src: ImageObject["src"];
+}
+
 export type GameObjects = GameObject;
 export type GameHandler = (context: any) => void;
 export type GameHandlerAsync = (
@@ -138,6 +148,9 @@ export type GameHandlerAsync = (
  * ApplicationConfiguration type.
  */
 export type InstanceConfiguration = {
+  console?: {
+    verbose?: ApplicationConfiguration["console"]["verbose"];
+  };
   display?: {
     alpha?: ApplicationConfiguration["display"]["alpha"];
     fps?: ApplicationConfiguration["display"]["fps"];

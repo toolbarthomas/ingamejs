@@ -4,6 +4,9 @@ import { ApplicationConfiguration } from "thundershock";
  * Defines the default Thundershock application configuration.
  */
 export const config: ApplicationConfiguration = {
+  console: {
+    verbose: false,
+  },
   display: {
     fps: 60,
     height: 600,

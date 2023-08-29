@@ -1,3 +1,5 @@
+import { Entry } from "@system/Entry";
+
 /**
  * Defines the expected message count to use within the Console. By default it
  * should reset from the defined value, this should be around 30 seconds if the
@@ -14,10 +16,12 @@ let consoleMessageCount = 0;
 /**
  * Console helper to use instead of the default console.
  */
-export class Console {
+export class Console extends Entry {
   name: string;
 
   constructor() {
+    super();
+
     this.name = this.constructor.name;
   }
 
@@ -38,11 +42,14 @@ export class Console {
    * @param args Any console argument to use.
    */
   static log(...args: any) {
-    if (consoleMessageCount === consoleMaxMessageCount) {
-      Console.use("clear");
-    }
+    const { verbose } = Console.config.console || {};
 
-    Console.use("log", ...args);
+    if (!verbose)
+      if (consoleMessageCount === consoleMaxMessageCount) {
+        Console.use("clear");
+      }
+
+    verbose && Console.use("log", ...args);
   }
 
   // Alias to the now timestamp methods.

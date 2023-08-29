@@ -50,8 +50,6 @@ export class RenderEngine extends Core {
     }
 
     this.kernel.events.on(SCENE_CHANGE, this.setCurrentScene, this);
-
-    RenderEngine.info(`RenderEngine context definitions updated`);
   }
 
   useContext(
